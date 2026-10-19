@@ -275,8 +275,9 @@ Cross-validation is the absolute source of truth. To prevent leakage, splits are
 Stage 1 is complete when all of the following commands execute successfully without manual intervention:
 
 ```bash
-# 1. Download dataset and generate competition metadata
-python -m workspace.ingest --competition playground-series-s4e10
+# 1. Download dataset (or use pre-downloaded local Titanic dataset in workspace/data/raw/)
+python -m workspace.ingest --competition titanic
+# (or for playground series: python -m workspace.ingest --competition playground-series-s4e10)
 
 # 2. Run automated exploratory data analysis
 python -m workspace.eda_scanner --data-dir workspace/data/raw/

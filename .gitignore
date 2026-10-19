@@ -1,0 +1,29 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Data & Large Archives
+*.zip
+*.tar.gz
+*.parquet
+*.npy
+workspace/data/raw/*.csv
+workspace/data/raw/*.parquet
+workspace/data/raw/*.zip
+!workspace/data/raw/.gitkeep
+
+# Execution artifacts & ephemeral databases
+workspace/artifacts/*.npy
+workspace/artifacts/registry/*.npy
+workspace/artifacts/*.csv
+workspace/memory/experiment_ledger.db
+workspace/memory/diagnostics_report.json
+
+# Environments & IDEs
+.env
+.venv
+env/
+venv/
+.DS_Store
+.pytest_cache/
