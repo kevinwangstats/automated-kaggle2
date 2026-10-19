@@ -74,7 +74,7 @@ def extract_error_slices(
             # Leaf node
             avg_loss = float(tree_.value[node][0][0])
             count = int(tree_.n_node_samples[node])
-            if avg_loss > global_mean_loss * 1.15 and len(conditions) > 0:
+            if len(conditions) > 0:
                 leaf_nodes.append({
                     "condition": " & ".join(conditions),
                     "slice_loss": round(avg_loss, 4),
@@ -85,7 +85,11 @@ def extract_error_slices(
     recurse(0, [])
     # Sort by highest slice loss
     leaf_nodes.sort(key=lambda x: x["slice_loss"], reverse=True)
-    return leaf_nodes[:max_slices]
+    
+    # Filter to slices with error above average if possible, otherwise return highest error leaves
+    elevated = [leaf for leaf in leaf_nodes if leaf["slice_loss"] >= global_mean_loss]
+    selected = elevated if elevated else leaf_nodes
+    return selected[:max_slices]
 
 
 def generate_diagnostics_report(
