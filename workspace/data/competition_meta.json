@@ -1,0 +1,37 @@
+{
+  "competition_slug": "titanic",
+  "id_column": "PassengerId",
+  "target_column": "Survived",
+  "problem_type": "binary_classification",
+  "evaluation_metric": "roc_auc",
+  "train_rows": 891,
+  "test_rows": 418,
+  "train_features_count": 10,
+  "raw_train_columns": [
+    "PassengerId",
+    "Survived",
+    "Pclass",
+    "Name",
+    "Sex",
+    "Age",
+    "SibSp",
+    "Parch",
+    "Ticket",
+    "Fare",
+    "Cabin",
+    "Embarked"
+  ],
+  "raw_test_columns": [
+    "PassengerId",
+    "Pclass",
+    "Name",
+    "Sex",
+    "Age",
+    "SibSp",
+    "Parch",
+    "Ticket",
+    "Fare",
+    "Cabin",
+    "Embarked"
+  ]
+}

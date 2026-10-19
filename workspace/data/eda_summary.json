@@ -1,0 +1,175 @@
+{
+  "train_shape": {
+    "rows": 891,
+    "columns": 12
+  },
+  "test_shape": {
+    "rows": 418,
+    "columns": 11
+  },
+  "id_column": "PassengerId",
+  "target_column": "Survived",
+  "target_profile": {
+    "type": "discrete",
+    "classes": [
+      "0",
+      "1"
+    ],
+    "class_distribution": {
+      "0": 0.6162,
+      "1": 0.3838
+    },
+    "imbalance_ratio": 1.61
+  },
+  "features": {
+    "Pclass": {
+      "dtype": "int64",
+      "is_numeric": true,
+      "train_missing_ratio": 0.0,
+      "test_missing_ratio": 0.0,
+      "unique_count": 3,
+      "top_categories": {
+        "3": 0.5511,
+        "1": 0.2424,
+        "2": 0.2065
+      },
+      "has_rare_categories": false,
+      "test_unseen_categories_count": 0
+    },
+    "Name": {
+      "dtype": "object",
+      "is_numeric": false,
+      "train_missing_ratio": 0.0,
+      "test_missing_ratio": 0.0,
+      "unique_count": 891,
+      "top_categories": {
+        "Braund, Mr. Owen Harris": 0.0011,
+        "Boulos, Mr. Hanna": 0.0011,
+        "Frolicher-Stehli, Mr. Maxmillian": 0.0011,
+        "Gilinski, Mr. Eliezer": 0.0011,
+        "Murdlin, Mr. Joseph": 0.0011
+      },
+      "has_rare_categories": true,
+      "test_unseen_categories_count": 416
+    },
+    "Sex": {
+      "dtype": "object",
+      "is_numeric": false,
+      "train_missing_ratio": 0.0,
+      "test_missing_ratio": 0.0,
+      "unique_count": 2,
+      "top_categories": {
+        "male": 0.6476,
+        "female": 0.3524
+      },
+      "has_rare_categories": false,
+      "test_unseen_categories_count": 0
+    },
+    "Age": {
+      "dtype": "float64",
+      "is_numeric": true,
+      "train_missing_ratio": 0.1987,
+      "test_missing_ratio": 0.2057,
+      "unique_count": 88,
+      "min": 0.42,
+      "max": 80.0,
+      "mean": 29.6991,
+      "median": 28.0,
+      "std": 14.5265,
+      "iqr": 17.875,
+      "skewness": 0.3891
+    },
+    "SibSp": {
+      "dtype": "int64",
+      "is_numeric": true,
+      "train_missing_ratio": 0.0,
+      "test_missing_ratio": 0.0,
+      "unique_count": 7,
+      "top_categories": {
+        "0": 0.6824,
+        "1": 0.2346,
+        "2": 0.0314,
+        "4": 0.0202,
+        "3": 0.018
+      },
+      "has_rare_categories": true,
+      "test_unseen_categories_count": 0
+    },
+    "Parch": {
+      "dtype": "int64",
+      "is_numeric": true,
+      "train_missing_ratio": 0.0,
+      "test_missing_ratio": 0.0,
+      "unique_count": 7,
+      "top_categories": {
+        "0": 0.7609,
+        "1": 0.1324,
+        "2": 0.0898,
+        "5": 0.0056,
+        "3": 0.0056
+      },
+      "has_rare_categories": true,
+      "test_unseen_categories_count": 1
+    },
+    "Ticket": {
+      "dtype": "object",
+      "is_numeric": false,
+      "train_missing_ratio": 0.0,
+      "test_missing_ratio": 0.0,
+      "unique_count": 681,
+      "top_categories": {
+        "347082": 0.0079,
+        "CA. 2343": 0.0079,
+        "1601": 0.0079,
+        "3101295": 0.0067,
+        "CA 2144": 0.0067
+      },
+      "has_rare_categories": true,
+      "test_unseen_categories_count": 248
+    },
+    "Fare": {
+      "dtype": "float64",
+      "is_numeric": true,
+      "train_missing_ratio": 0.0,
+      "test_missing_ratio": 0.0024,
+      "unique_count": 248,
+      "min": 0.0,
+      "max": 512.3292,
+      "mean": 32.2042,
+      "median": 14.4542,
+      "std": 49.6934,
+      "iqr": 23.0896,
+      "skewness": 4.7873
+    },
+    "Cabin": {
+      "dtype": "object",
+      "is_numeric": false,
+      "train_missing_ratio": 0.771,
+      "test_missing_ratio": 0.7823,
+      "unique_count": 147,
+      "top_categories": {
+        "B96 B98": 0.0196,
+        "G6": 0.0196,
+        "C23 C25 C27": 0.0196,
+        "C22 C26": 0.0147,
+        "F33": 0.0147
+      },
+      "has_rare_categories": true,
+      "test_unseen_categories_count": 39
+    },
+    "Embarked": {
+      "dtype": "object",
+      "is_numeric": false,
+      "train_missing_ratio": 0.0022,
+      "test_missing_ratio": 0.0,
+      "unique_count": 3,
+      "top_categories": {
+        "S": 0.7244,
+        "C": 0.189,
+        "Q": 0.0866
+      },
+      "has_rare_categories": false,
+      "test_unseen_categories_count": 0
+    }
+  }
+}
