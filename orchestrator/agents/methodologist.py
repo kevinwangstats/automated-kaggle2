@@ -6,6 +6,7 @@ falsifiable mathematical hypotheses without writing executable Python code.
 """
 
 import json
+import os
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 import litellm

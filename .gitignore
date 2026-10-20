@@ -19,6 +19,7 @@ workspace/artifacts/registry/*.npy
 workspace/artifacts/*.csv
 workspace/memory/experiment_ledger.db
 workspace/memory/diagnostics_report.json
+workspace/src/.backup_best/
 
 # Environments & IDEs
 .env
