@@ -139,6 +139,17 @@ Rules:
 - Output your reasoning strictly conforming to the `HypothesisSpec` Pydantic schema.
 ```
 
+#### LLM Provider Hierarchy & Resolver (`orchestrator/llm.py`)
+To prevent vendor lock-in and enable flexible multi-provider switching across diverse API keys:
+1. **Default Provider (`DEEPSEEK_API_KEY`)**: Defaults to `deepseek/deepseek-chat` via LiteLLM using keys exported in shell profiles (`~/.zshrc`).
+2. **Secondary Provider (`MOONSHOT_API_KEY`)**: Configured for seamless switching to Moonshot models (`moonshot/moonshot-v1-8k` or `moonshot/moonshot-v1-32k`).
+3. **Enterprise & Third-Party Fallbacks**: Automatically detects `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, or `GEMINI_API_KEY` if present.
+4. **CLI Model Override**: The runner CLI accepts `--model <model_name>` to override the active LLM on demand without code changes:
+   ```bash
+   python -m orchestrator.runner --model moonshot/moonshot-v1-8k --competition titanic
+   ```
+5. **Deterministic Statistical Fallback**: If network calls or API limits fail, the Methodologist automatically falls back to the deterministic error-slice deduction engine so autonomous runs never crash.
+
 ---
 
 ### Task 3.4: LangGraph Assembly & State Machine (`orchestrator/graph.py`)

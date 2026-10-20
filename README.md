@@ -107,6 +107,7 @@ automated-kaggle2/
 │       └── diagnostics_report.json     # Active diagnostic summary
 └── orchestrator/                       # Multi-agent controller
     ├── state.py                        # LangGraph state schema & Pydantic models
+    ├── llm.py                          # Multi-provider LLM resolver (DeepSeek / Moonshot)
     ├── agents/
     │   ├── commander.py                # High-level budget & family router
     │   ├── coder.py                    # Empirical data scientist code generator
@@ -116,3 +117,32 @@ automated-kaggle2/
     ├── graph.py                        # LangGraph compiled state graph
     └── runner.py                       # CLI entry point
 ```
+
+---
+
+## 5. LLM Provider Hierarchy & Configuration
+
+The orchestrator integrates a multi-provider LLM resolver ([orchestrator/llm.py](file:///Users/kevinwang/projects/automated-kaggle2/orchestrator/llm.py)) that automatically detects API keys from your environment (such as `~/.zshrc`) with zero manual setup:
+
+1. **Default: DeepSeek (`DEEPSEEK_API_KEY`)**
+   - Automatically activates `deepseek/deepseek-chat` via LiteLLM.
+   - Provides cost-efficient, high-reasoning mathematical deduction for the Methodologist agent.
+
+2. **Alternative: Moonshot AI (`MOONSHOT_API_KEY`)**
+   - Supported for switching to Moonshot models (e.g. `moonshot/moonshot-v1-8k`, `moonshot/moonshot-v1-32k`).
+
+3. **Enterprise & Third-Party Fallbacks**
+   - Automatically falls back to `OPENAI_API_KEY` (`gpt-4o-mini`), `ANTHROPIC_API_KEY`, or `GEMINI_API_KEY` if present.
+
+4. **Dynamic CLI Model Override**
+   - Override the active LLM on any execution without editing code:
+     ```bash
+     # Run with default DeepSeek
+     python -m orchestrator.runner --competition titanic
+
+     # Override with Moonshot
+     python -m orchestrator.runner --model moonshot/moonshot-v1-8k --competition titanic
+     ```
+
+5. **Deterministic Statistical Fallback**
+   - If network connectivity is offline or API quotas are exhausted, the Methodologist automatically falls back to the deterministic error-slice deduction engine, ensuring autonomous runs complete without crashing.
