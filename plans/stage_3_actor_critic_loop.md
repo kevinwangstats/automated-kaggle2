@@ -6,6 +6,7 @@ Stage 3 assembles the core autonomous modeling loop: the **Actor-Critic cycle**.
 In this stage, we focus on a single model family (e.g., LightGBM) to validate that an execution agent and a reasoning agent can iteratively discover, diagnose, code, and evaluate improvements without human intervention.
 
 ### Failure Modes Mitigated in Stage 3
+
 1. **Unconstrained Code Drift**: When an LLM is given blanket permission to rewrite an entire codebase, it often introduces breaking regressions, alters evaluation logic, or drops feature pipelines. In Stage 3, the Empirical Coder is constrained to two modular files:
    - `src/features.py` (stateless feature transformation functions)
    - `src/train.py` (model training and artifact generation)
@@ -82,11 +83,13 @@ class AgentState(TypedDict):
 ### Task 3.2: The Empirical Coder Node & Self-Healing Loop (`orchestrator/agents/coder.py`)
 
 The Empirical Coder receives:
+
 1. The structured `HypothesisSpec` from the Methodologist.
 2. The current contents of `src/features.py` and `src/train.py`.
 3. The schema and summary from `eda_summary.json`.
 
 #### Prompt Constraints for the Coder
+
 - **Input/Output Contract**:
   - `src/train.py` MUST load data exclusively from `/app/data/train_folds.parquet` and `/app/data/raw/test.csv`.
   - `src/train.py` MUST output `/app/artifacts/oof_preds.npy` and `/app/artifacts/test_preds.npy`.
@@ -97,17 +100,21 @@ The Empirical Coder receives:
   - Never import external AutoML libraries (`auto_gluon`, `flaml`, `tpot`).
 
 #### Inner Self-Healing Loop Algorithm
+
 When `DockerExecutor.run_script("src/train.py")` runs:
+
 1. If `exit_code == 0`: Verify that `artifacts/oof_preds.npy` exists, matches the length of `train_folds.parquet`, and contains no NaNs. If valid, proceed to the Diagnostic Auditor node.
 2. If `exit_code != 0` or NaN check fails:
    - Extract the trailing 40 lines of Python `stderr` (traceback).
    - Increment `retry_count`.
    - If `retry_count <= 3`: Invoke the Coder with a targeted repair prompt containing the traceback:
+
      ```text
      Your previous modification caused the following runtime error:
      {traceback}
      Fix the syntax or dimensional bug in src/features.py or src/train.py without abandoning the core hypothesis.
      ```
+
    - If `retry_count > 3`: Mark the iteration as `FAILED`, revert changes, and return to the Methodologist for a new hypothesis.
 
 ---
@@ -115,11 +122,13 @@ When `DockerExecutor.run_script("src/train.py")` runs:
 ### Task 3.3: The Methodologist Node (`orchestrator/agents/methodologist.py`)
 
 The Methodologist is the statistical strategist. It receives:
+
 1. `workspace/memory/diagnostics_report.json` (compact error report from Stage 2).
 2. The previous hypothesis and its empirical score delta ($\Delta \text{CV}$).
 3. A summary of past rejected and accepted interventions (preventing loops).
 
 #### Methodologist System Prompt Architecture
+
 ```text
 You are the Lead Methodologist for an autonomous competitive machine learning system.
 You do NOT write Python code. You formulate mathematically grounded, falsifiable hypotheses.
@@ -140,18 +149,20 @@ Rules:
 ```
 
 #### LLM Provider Hierarchy & Resolver (`orchestrator/llm.py`)
+
 To prevent vendor lock-in and enable flexible multi-provider switching across diverse API keys:
+
 1. **Chinese Providers (Top-Tier Default)**:
    - **DeepSeek (`DEEPSEEK_API_KEY`)**: Defaults to `deepseek/deepseek-chat` (DeepSeek-V3 flagship 671B MoE) or `deepseek/deepseek-reasoner` (DeepSeek-R1).
    - **Kimi / Moonshot (`MOONSHOT_API_KEY`)**: Defaults to `kimi-k3` (Kimi's flagship 2.8T parameter model with 1M-token context window) or `kimi-k2.7-code` via `https://api.moonshot.cn/v1`.
-2. **Western Providers (Mid-Tier Default)**:
-   - **Anthropic (`ANTHROPIC_API_KEY`)**: Defaults to `claude-3-5-sonnet-20241022` (Sonnet mid-tier workhorse).
-   - **Google Gemini (`GEMINI_API_KEY`)**: Defaults to `gemini/gemini-2.0-flash` (Gemini Flash mid-tier workhorse).
-   - **OpenAI (`OPENAI_API_KEY`)**: Defaults to `gpt-4o` (Mid-tier multimodal workhorse).
+2. **Gemini (Mid-Tier Default)**:
+   - **Google Gemini (`GEMINI_API_KEY`)**: Defaults to `gemini/gemini-3.8-flash` (Gemini Flash mid-tier workhorse).
 3. **CLI Model Override**: The runner CLI accepts `--model <model_name>` to override the active LLM on demand without code changes:
+
    ```bash
    python -m orchestrator.runner --model kimi-k3 --competition titanic
    ```
+
 4. **Deterministic Statistical Fallback**: If network calls or API limits fail, the Methodologist automatically falls back to the deterministic error-slice deduction engine so autonomous runs never crash.
 
 ---
@@ -225,6 +236,7 @@ def build_single_branch_graph():
 Stage 3 is verified through an autonomous 5-iteration dry run on a live tabular dataset (e.g., Kaggle Playground Series S4E10: Loan Approval Prediction):
 
 ### Test Execution Command
+
 ```bash
 python -m orchestrator.runner \
     --competition playground-series-s4e10 \
@@ -234,6 +246,7 @@ python -m orchestrator.runner \
 ```
 
 ### Success Verification Assertions
+
 1. **Autonomous Initialization**: Iteration 0 writes `src/features.py` and `src/train.py`, successfully producing `artifacts/oof_preds.npy`.
 2. **Self-Healing Tested**: Inject a synthetic syntax error into `features.py` and verify that the Coder detects the traceback and heals itself within 2 retries without crashing the graph.
 3. **Structured Hypotheses**: Verify that the Methodologist outputs a valid `HypothesisSpec` for every iteration that directly references items from `diagnostics_report.json`.

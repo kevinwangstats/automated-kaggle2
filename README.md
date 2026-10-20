@@ -3,6 +3,7 @@
 ## 1. System Overview & Core Philosophy
 
 This repository implements a modular, autonomous machine learning system designed to compete in tabular and structured Kaggle competitions (such as the Tabular Playground Series and standard industry prediction tasks). The system models the iterative problem-solving workflow of a competitive data science team through an **Actor-Critic loop**:
+
 - **Execution Agents (Empirical Coders)** write clean, modular feature engineering and modeling scripts.
 - **Critic Agents (Methodologists)** reason over formal statistical diagnostics rather than ad-hoc heuristics.
 - **Evaluation Gatekeepers (Diagnostic Auditors)** compute leak-free cross-validation scores and token-efficient diagnostic reports.
@@ -60,7 +61,7 @@ flowchart TD
 The implementation is broken down into five self-contained, verifiable stages. Detailed plans for each stage are provided in the links below:
 
 | Stage | Document | Key Objective | Milestone Verification |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | **Stage 1** | [Stage 1: Foundation, Sandbox & Data Contract](file:///Users/kevinwang/projects/automated-kaggle2/plans/stage_1_foundation_sandbox.md) | Kaggle CLI ingestion, immutable CV lock, Docker sandbox runner | CLI ingestion and verified read-only `train_folds.parquet` |
 | **Stage 2** | [Stage 2: Diagnostic Auditor & Scoring Harness](file:///Users/kevinwang/projects/automated-kaggle2/plans/stage_2_diagnostic_auditor.md) | Universal metric registry, compact diagnostic generator, adversarial validation | `<1,500`-token `diagnostics_report.json` generated in `<30s` |
 | **Stage 3** | [Stage 3: Single-Branch Actor-Critic MVP](file:///Users/kevinwang/projects/automated-kaggle2/plans/stage_3_actor_critic_loop.md) | LangGraph loop with Coder self-healing, Methodologist hypothesis generation | 5-iteration autonomous loop demonstrating CV improvement |
@@ -127,15 +128,15 @@ The orchestrator integrates a multi-provider LLM resolver ([orchestrator/llm.py]
 ### Model Tiering Policy
 
 | Region / Provider | Tier Class | Default Model | Rationale & Capabilities |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | **DeepSeek** (`DEEPSEEK_API_KEY`) | **Top-Tier (Default)** | `deepseek/deepseek-chat` (DeepSeek-V3) | Flagship 671B MoE architecture; exceptional statistical reasoning and cost efficiency. Supports `deepseek/deepseek-reasoner` (R1). |
 | **Kimi / Moonshot** (`MOONSHOT_API_KEY`) | **Top-Tier Flagship** | `kimi-k3` / `kimi-k2.7-code` | Flagship 2.8T parameter model with 1M-token context window; frontier intelligence in code generation and complex diagnostics. |
-| **Anthropic** (`ANTHROPIC_API_KEY`) | **Mid-Tier Workhorse** | `claude-3-5-sonnet-20241022` | Premier balance of high coding benchmark scores and fast inference without Opus premium cost. |
-| **Google Gemini** (`GEMINI_API_KEY`) | **Mid-Tier Workhorse** | `gemini/gemini-2.0-flash` | Sub-second latency, robust structured JSON output, and multi-modal error slice comprehension. |
-| **OpenAI** (`OPENAI_API_KEY`) | **Mid-Tier Workhorse** | `gpt-4o` | Reliable general-purpose multi-modal reasoning. |
+| **Google Gemini** (`GEMINI_API_KEY`) | **Mid-Tier Workhorse** | `gemini/gemini-3.8-flash` | Sub-second latency, robust structured JSON output, and multi-modal error slice comprehension. |
 
 ### Dynamic CLI Model Override
+
 Override the active LLM on any execution without editing code:
+
 ```bash
 # Run with default top-tier DeepSeek
 python -m orchestrator.runner --competition titanic
@@ -143,12 +144,10 @@ python -m orchestrator.runner --competition titanic
 # Switch to top-tier Kimi K3
 python -m orchestrator.runner --model kimi-k3 --competition titanic
 
-# Switch to mid-tier Claude 3.5 Sonnet
-python -m orchestrator.runner --model claude-3-5-sonnet-20241022 --competition titanic
-
-# Switch to mid-tier Gemini 2.0 Flash
-python -m orchestrator.runner --model gemini/gemini-2.0-flash --competition titanic
+# Switch to mid-tier Gemini 3.8 Flash
+python -m orchestrator.runner --model gemini/gemini-3.8-flash --competition titanic
 ```
 
 ### Deterministic Statistical Fallback
+
 If network connectivity is offline or API quotas are exhausted, the Methodologist automatically falls back to the deterministic error-slice deduction engine, ensuring autonomous runs complete without crashing.

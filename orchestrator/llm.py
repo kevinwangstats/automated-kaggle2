@@ -29,10 +29,8 @@ def get_default_llm_config(preferred_model: Optional[str] = None) -> LLMConfig:
     - Chinese Providers (DeepSeek / Kimi): Default to TOP-TIER flagship models
       - DeepSeek: 'deepseek/deepseek-chat' (DeepSeek-V3 671B MoE) or 'deepseek/deepseek-reasoner' (DeepSeek-R1)
       - Kimi / Moonshot: 'kimi-k3' (Flagship 2.8T params, 1M context) / 'kimi-k2.7-code'
-    - Western Providers (Anthropic / Gemini / OpenAI): Default to MID-TIER workhorse models
-      - Anthropic: 'claude-3-5-sonnet-20241022' (Sonnet mid-tier workhorse)
-      - Gemini: 'gemini/gemini-2.0-flash' (Gemini Flash mid-tier)
-      - OpenAI: 'gpt-4o' (Mid-tier multimodal workhorse)
+    - Gemini: Default to MID-TIER workhorse model
+      - Gemini: 'gemini/gemini-3.8-flash' (Gemini Flash mid-tier)
     """
     if preferred_model:
         # Route Kimi models to Moonshot OpenAI-compatible endpoint if needed
@@ -65,20 +63,10 @@ def get_default_llm_config(preferred_model: Optional[str] = None) -> LLMConfig:
             temperature=0.2,
         )
 
-    # 3. Anthropic (Mid-Tier Workhorse: Claude 3.5 Sonnet)
-    anthropic_key = os.environ.get("ANTHROPIC_API_KEY")
-    if anthropic_key:
-        return LLMConfig(model="claude-3-5-sonnet-20241022", api_key=anthropic_key)
-
-    # 4. Gemini (Mid-Tier Workhorse: Gemini 2.0 Flash)
+    # 3. Gemini (Mid-Tier Workhorse: Gemini 3.8 Flash)
     gemini_key = os.environ.get("GEMINI_API_KEY")
     if gemini_key:
-        return LLMConfig(model="gemini/gemini-2.0-flash", api_key=gemini_key)
-
-    # 5. OpenAI (Mid-Tier Workhorse: GPT-4o)
-    openai_key = os.environ.get("OPENAI_API_KEY")
-    if openai_key:
-        return LLMConfig(model="gpt-4o", api_key=openai_key)
+        return LLMConfig(model="gemini/gemini-3.8-flash", api_key=gemini_key)
 
     # Fallback default: DeepSeek top-tier
     return LLMConfig(model="deepseek/deepseek-chat")
