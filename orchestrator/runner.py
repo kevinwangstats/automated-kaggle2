@@ -21,6 +21,7 @@ def main():
     parser.add_argument("--max-iterations", type=int, default=5, help="Number of iterations to execute")
     parser.add_argument("--epsilon", type=float, default=0.0005, help="Minimum CV improvement threshold")
     parser.add_argument("--mode", type=str, default="local", help="Executor mode: 'local' or 'docker'")
+    parser.add_argument("--model", type=str, default=None, help="LLM model (defaults to deepseek/deepseek-chat via DEEPSEEK_API_KEY)")
     args = parser.parse_args()
 
     loop = ActorCriticLoop(
@@ -31,6 +32,7 @@ def main():
         epsilon=args.epsilon,
         executor_mode=args.mode,
         python_executable=sys.executable,
+        model_name=args.model,
     )
 
     final_state = loop.run_all()

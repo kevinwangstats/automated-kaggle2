@@ -30,6 +30,7 @@ class ActorCriticLoop:
         epsilon: float = 0.0005,
         executor_mode: str = "auto",
         python_executable: Optional[str] = None,
+        model_name: Optional[str] = None,
     ):
         self.workspace_dir = Path(workspace_dir).resolve()
         self.competition_slug = competition_slug
@@ -38,9 +39,10 @@ class ActorCriticLoop:
         self.epsilon = epsilon
         self.executor_mode = executor_mode
         self.python_executable = python_executable or sys.executable
+        self.model_name = model_name
 
         self.coder = EmpiricalCoder(workspace_dir=self.workspace_dir)
-        self.methodologist = Methodologist(workspace_dir=self.workspace_dir)
+        self.methodologist = Methodologist(workspace_dir=self.workspace_dir, model_name=self.model_name)
         self.devops = DevOpsGatekeeper(workspace_dir=self.workspace_dir)
         self.executor = get_executor(
             workspace_dir=self.workspace_dir,

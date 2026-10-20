@@ -12,6 +12,7 @@ from typing import Any, Dict, List, Optional
 import litellm
 
 from orchestrator.state import AgentState, HypothesisSpec
+from orchestrator.llm import get_default_llm_config, call_llm_for_json, LLMConfig
 
 
 METHODOLOGIST_SYSTEM_PROMPT = """You are the Lead Methodologist for an autonomous competitive machine learning team.
@@ -29,19 +30,27 @@ Decision Rules:
 3. Handle Calibration / Target Skewness: If residual skewness or calibration ECE is elevated, propose log/power transforms or probability calibration.
 4. Eliminate Redundancy: Review past experiments; do NOT repeat interventions that were previously REJECTED.
 
-You must output strictly conforming to the HypothesisSpec schema.
+You must output strictly conforming to the HypothesisSpec schema:
+{
+  "hypothesis_id": "string",
+  "statistical_diagnosis": "string",
+  "intervention_category": "feature_engineering" | "target_transform" | "hyperparameter" | "loss_function",
+  "proposed_intervention": "string",
+  "expected_diagnostic_shift": "string"
+}
 """
 
 
 class Methodologist:
-    def __init__(self, workspace_dir: Path, model_name: str = "gpt-4o-mini"):
+    def __init__(self, workspace_dir: Path, model_name: Optional[str] = None):
         self.workspace_dir = Path(workspace_dir).resolve()
-        self.model_name = model_name
+        self.llm_config: LLMConfig = get_default_llm_config(preferred_model=model_name)
+        print(f"[Methodologist] Configured active LLM: {self.llm_config.model}")
 
     def formulate_hypothesis(self, state: AgentState) -> HypothesisSpec:
         """
         Generates a HypothesisSpec from diagnostics and EDA summaries.
-        Uses LiteLLM if an API key is available, or deterministic statistical reasoning otherwise.
+        Uses DeepSeek/Moonshot via LiteLLM if available, or deterministic statistical reasoning as fallback.
         """
         iteration = state["iteration"]
         diagnostics = state.get("last_diagnostics") or {}
@@ -56,38 +65,31 @@ class Methodologist:
         top_features = [f["name"] for f in diagnostics.get("top_features", [])[:5]]
         zero_features = diagnostics.get("zero_importance_features", [])
 
-        # Check if an LLM API key is configured
-        has_api_key = any(
-            os.environ.get(k)
-            for k in ["OPENAI_API_KEY", "ANTHROPIC_API_KEY", "GEMINI_API_KEY", "GROQ_API_KEY"]
-        )
-
-        if has_api_key:
-            try:
-                prompt_content = {
-                    "iteration": iteration,
-                    "current_cv": state["best_cv_score"],
-                    "diagnostics": diagnostics,
-                    "eda_summary": eda_summary,
-                    "past_hypotheses": [h.get("hypothesis_summary") for h in state.get("history", [])],
-                }
-                messages = [
-                    {"role": "system", "content": METHODOLOGIST_SYSTEM_PROMPT},
-                    {
-                        "role": "user",
-                        "content": f"Formulate the next hypothesis given this state:\n{json.dumps(prompt_content, indent=2)}",
-                    },
-                ]
-                response = litellm.completion(
-                    model=self.model_name,
-                    messages=messages,
-                    response_format={"type": "json_object"},
-                    temperature=0.3,
-                )
-                raw_json = json.loads(response.choices[0].message.content)
-                return HypothesisSpec(**raw_json)
-            except Exception as e:
-                print(f"LLM formulation unavailable ({e}), using statistical deduction engine.")
+        # Attempt LLM call
+        try:
+            prompt_content = {
+                "iteration": iteration,
+                "current_cv": state["best_cv_score"],
+                "diagnostics": diagnostics,
+                "eda_summary": eda_summary,
+                "past_hypotheses": [h.get("hypothesis") for h in state.get("history", [])],
+            }
+            messages = [
+                {
+                    "role": "user",
+                    "content": f"Formulate the next hypothesis given this state:\n{json.dumps(prompt_content, indent=2)}",
+                },
+            ]
+            raw_json = call_llm_for_json(
+                config=self.llm_config,
+                messages=messages,
+                system_prompt=METHODOLOGIST_SYSTEM_PROMPT,
+            )
+            spec = HypothesisSpec(**raw_json)
+            print(f"[Methodologist] Hypothesis generated via {self.llm_config.model}: {spec.hypothesis_id}")
+            return spec
+        except Exception as e:
+            print(f"LLM call to {self.llm_config.model} failed ({e}), using statistical deduction engine.")
 
         # Fallback Deterministic Statistical Deduction Engine
         return self._deduce_hypothesis_statistically(
