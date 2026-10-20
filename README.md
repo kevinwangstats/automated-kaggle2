@@ -120,29 +120,35 @@ automated-kaggle2/
 
 ---
 
-## 5. LLM Provider Hierarchy & Configuration
+## 5. LLM Provider Hierarchy & Tiering Policy
 
-The orchestrator integrates a multi-provider LLM resolver ([orchestrator/llm.py](file:///Users/kevinwang/projects/automated-kaggle2/orchestrator/llm.py)) that automatically detects API keys from your environment (such as `~/.zshrc`) with zero manual setup:
+The orchestrator integrates a multi-provider LLM resolver ([orchestrator/llm.py](file:///Users/kevinwang/projects/automated-kaggle2/orchestrator/llm.py)) that automatically detects API keys from your environment (`~/.zshrc`) with zero manual setup.
 
-1. **Default: DeepSeek (`DEEPSEEK_API_KEY`)**
-   - Automatically activates `deepseek/deepseek-chat` via LiteLLM.
-   - Provides cost-efficient, high-reasoning mathematical deduction for the Methodologist agent.
+### Model Tiering Policy
 
-2. **Alternative: Moonshot AI (`MOONSHOT_API_KEY`)**
-   - Supported for switching to Moonshot models (e.g. `moonshot/moonshot-v1-8k`, `moonshot/moonshot-v1-32k`).
+| Region / Provider | Tier Class | Default Model | Rationale & Capabilities |
+|---|---|---|---|
+| **DeepSeek** (`DEEPSEEK_API_KEY`) | **Top-Tier (Default)** | `deepseek/deepseek-chat` (DeepSeek-V3) | Flagship 671B MoE architecture; exceptional statistical reasoning and cost efficiency. Supports `deepseek/deepseek-reasoner` (R1). |
+| **Kimi / Moonshot** (`MOONSHOT_API_KEY`) | **Top-Tier Flagship** | `kimi-k3` / `kimi-k2.7-code` | Flagship 2.8T parameter model with 1M-token context window; frontier intelligence in code generation and complex diagnostics. |
+| **Anthropic** (`ANTHROPIC_API_KEY`) | **Mid-Tier Workhorse** | `claude-3-5-sonnet-20241022` | Premier balance of high coding benchmark scores and fast inference without Opus premium cost. |
+| **Google Gemini** (`GEMINI_API_KEY`) | **Mid-Tier Workhorse** | `gemini/gemini-2.0-flash` | Sub-second latency, robust structured JSON output, and multi-modal error slice comprehension. |
+| **OpenAI** (`OPENAI_API_KEY`) | **Mid-Tier Workhorse** | `gpt-4o` | Reliable general-purpose multi-modal reasoning. |
 
-3. **Enterprise & Third-Party Fallbacks**
-   - Automatically falls back to `OPENAI_API_KEY` (`gpt-4o-mini`), `ANTHROPIC_API_KEY`, or `GEMINI_API_KEY` if present.
+### Dynamic CLI Model Override
+Override the active LLM on any execution without editing code:
+```bash
+# Run with default top-tier DeepSeek
+python -m orchestrator.runner --competition titanic
 
-4. **Dynamic CLI Model Override**
-   - Override the active LLM on any execution without editing code:
-     ```bash
-     # Run with default DeepSeek
-     python -m orchestrator.runner --competition titanic
+# Switch to top-tier Kimi K3
+python -m orchestrator.runner --model kimi-k3 --competition titanic
 
-     # Override with Moonshot
-     python -m orchestrator.runner --model moonshot/moonshot-v1-8k --competition titanic
-     ```
+# Switch to mid-tier Claude 3.5 Sonnet
+python -m orchestrator.runner --model claude-3-5-sonnet-20241022 --competition titanic
 
-5. **Deterministic Statistical Fallback**
-   - If network connectivity is offline or API quotas are exhausted, the Methodologist automatically falls back to the deterministic error-slice deduction engine, ensuring autonomous runs complete without crashing.
+# Switch to mid-tier Gemini 2.0 Flash
+python -m orchestrator.runner --model gemini/gemini-2.0-flash --competition titanic
+```
+
+### Deterministic Statistical Fallback
+If network connectivity is offline or API quotas are exhausted, the Methodologist automatically falls back to the deterministic error-slice deduction engine, ensuring autonomous runs complete without crashing.

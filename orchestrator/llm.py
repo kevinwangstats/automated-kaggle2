@@ -25,17 +25,28 @@ class LLMConfig:
 def get_default_llm_config(preferred_model: Optional[str] = None) -> LLMConfig:
     """
     Resolves the LLM configuration based on available API keys.
-    Priority:
-    1. Explicit preferred_model if passed
-    2. DEEPSEEK_API_KEY -> 'deepseek/deepseek-chat' (Default)
-    3. MOONSHOT_API_KEY -> 'moonshot/moonshot-v1-8k'
-    4. OPENAI_API_KEY -> 'gpt-4o-mini'
-    5. ANTHROPIC_API_KEY -> 'claude-3-5-haiku-20241022'
-    6. GEMINI_API_KEY -> 'gemini/gemini-1.5-flash'
+    Tiering policy:
+    - Chinese Providers (DeepSeek / Kimi): Default to TOP-TIER flagship models
+      - DeepSeek: 'deepseek/deepseek-chat' (DeepSeek-V3 671B MoE) or 'deepseek/deepseek-reasoner' (DeepSeek-R1)
+      - Kimi / Moonshot: 'kimi-k3' (Flagship 2.8T params, 1M context) / 'kimi-k2.7-code'
+    - Western Providers (Anthropic / Gemini / OpenAI): Default to MID-TIER workhorse models
+      - Anthropic: 'claude-3-5-sonnet-20241022' (Sonnet mid-tier workhorse)
+      - Gemini: 'gemini/gemini-2.0-flash' (Gemini Flash mid-tier)
+      - OpenAI: 'gpt-4o' (Mid-tier multimodal workhorse)
     """
     if preferred_model:
+        # Route Kimi models to Moonshot OpenAI-compatible endpoint if needed
+        if "kimi" in preferred_model.lower():
+            moonshot_key = os.environ.get("MOONSHOT_API_KEY")
+            return LLMConfig(
+                model=f"openai/{preferred_model}" if not preferred_model.startswith("openai/") else preferred_model,
+                api_key=moonshot_key,
+                api_base="https://api.moonshot.cn/v1",
+                temperature=0.2,
+            )
         return LLMConfig(model=preferred_model)
 
+    # 1. DeepSeek (Top-Tier Default: DeepSeek-V3 / deepseek-chat)
     deepseek_key = os.environ.get("DEEPSEEK_API_KEY")
     if deepseek_key:
         return LLMConfig(
@@ -44,27 +55,32 @@ def get_default_llm_config(preferred_model: Optional[str] = None) -> LLMConfig:
             temperature=0.2,
         )
 
+    # 2. Kimi / Moonshot (Top-Tier Flagship: kimi-k3 via Moonshot API)
     moonshot_key = os.environ.get("MOONSHOT_API_KEY")
     if moonshot_key:
         return LLMConfig(
-            model="moonshot/moonshot-v1-8k",
+            model="openai/kimi-k3",
             api_key=moonshot_key,
+            api_base="https://api.moonshot.cn/v1",
             temperature=0.2,
         )
 
-    openai_key = os.environ.get("OPENAI_API_KEY")
-    if openai_key:
-        return LLMConfig(model="gpt-4o-mini", api_key=openai_key)
-
+    # 3. Anthropic (Mid-Tier Workhorse: Claude 3.5 Sonnet)
     anthropic_key = os.environ.get("ANTHROPIC_API_KEY")
     if anthropic_key:
-        return LLMConfig(model="claude-3-5-haiku-20241022", api_key=anthropic_key)
+        return LLMConfig(model="claude-3-5-sonnet-20241022", api_key=anthropic_key)
 
+    # 4. Gemini (Mid-Tier Workhorse: Gemini 2.0 Flash)
     gemini_key = os.environ.get("GEMINI_API_KEY")
     if gemini_key:
-        return LLMConfig(model="gemini/gemini-1.5-flash", api_key=gemini_key)
+        return LLMConfig(model="gemini/gemini-2.0-flash", api_key=gemini_key)
 
-    # Fallback default
+    # 5. OpenAI (Mid-Tier Workhorse: GPT-4o)
+    openai_key = os.environ.get("OPENAI_API_KEY")
+    if openai_key:
+        return LLMConfig(model="gpt-4o", api_key=openai_key)
+
+    # Fallback default: DeepSeek top-tier
     return LLMConfig(model="deepseek/deepseek-chat")
 
 
