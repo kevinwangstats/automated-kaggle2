@@ -28,20 +28,47 @@ def get_default_llm_config(preferred_model: Optional[str] = None) -> LLMConfig:
     Tiering policy:
     - Chinese Providers (DeepSeek / Kimi): Default to TOP-TIER flagship models
       - DeepSeek: 'deepseek/deepseek-chat' (DeepSeek-V3 671B MoE) or 'deepseek/deepseek-reasoner' (DeepSeek-R1)
-      - Kimi / Moonshot: 'kimi-k3' (Flagship 2.8T params, 1M context) / 'kimi-k2.7-code'
+      - Kimi / Moonshot: 'moonshot/moonshot-v1-8k', 'moonshot/kimi-latest' (Flagship 1M context)
     - Gemini: Default to MID-TIER workhorse model
-      - Gemini: 'gemini/gemini-3.8-flash' (Gemini Flash mid-tier)
+      - Gemini: 'gemini/gemini-2.5-flash' or 'gemini/gemini-1.5-flash'
     """
     if preferred_model:
-        # Route Kimi models to Moonshot OpenAI-compatible endpoint if needed
-        if "kimi" in preferred_model.lower():
-            moonshot_key = os.environ.get("MOONSHOT_API_KEY")
+        # 1. DeepSeek family normalization (auto-prefix 'deepseek/' if omitted)
+        if preferred_model.startswith("deepseek-") or preferred_model.startswith("deepseek/"):
+            normalized = preferred_model if preferred_model.startswith("deepseek/") else f"deepseek/{preferred_model}"
             return LLMConfig(
-                model=f"openai/{preferred_model}" if not preferred_model.startswith("openai/") else preferred_model,
-                api_key=moonshot_key,
-                api_base="https://api.moonshot.cn/v1",
+                model=normalized,
+                api_key=os.environ.get("DEEPSEEK_API_KEY"),
                 temperature=0.2,
             )
+
+        # 2. Moonshot / Kimi family normalization (auto-prefix 'moonshot/' or route via OpenAI format)
+        if "moonshot" in preferred_model.lower() or "kimi" in preferred_model.lower():
+            moonshot_key = os.environ.get("MOONSHOT_API_KEY")
+            if preferred_model.startswith("moonshot/"):
+                normalized = preferred_model
+            elif preferred_model.startswith("moonshot-") or preferred_model.startswith("kimi-"):
+                normalized = f"moonshot/{preferred_model}"
+            else:
+                normalized = f"openai/{preferred_model}" if not preferred_model.startswith("openai/") else preferred_model
+
+            return LLMConfig(
+                model=normalized,
+                api_key=moonshot_key,
+                api_base="https://api.moonshot.cn/v1" if normalized.startswith("openai/") else None,
+                temperature=0.2,
+            )
+
+        # 3. Gemini family normalization (auto-prefix 'gemini/' if omitted)
+        if preferred_model.startswith("gemini-") or preferred_model.startswith("gemini/"):
+            normalized = preferred_model if preferred_model.startswith("gemini/") else f"gemini/{preferred_model}"
+            gemini_key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
+            return LLMConfig(
+                model=normalized,
+                api_key=gemini_key,
+                temperature=0.2,
+            )
+
         return LLMConfig(model=preferred_model)
 
     # 1. DeepSeek (Top-Tier Default: DeepSeek-V3 / deepseek-chat)
@@ -53,20 +80,19 @@ def get_default_llm_config(preferred_model: Optional[str] = None) -> LLMConfig:
             temperature=0.2,
         )
 
-    # 2. Kimi / Moonshot (Top-Tier Flagship: kimi-k3 via Moonshot API)
+    # 2. Kimi / Moonshot (Top-Tier Flagship: moonshot-v1-8k via Moonshot API)
     moonshot_key = os.environ.get("MOONSHOT_API_KEY")
     if moonshot_key:
         return LLMConfig(
-            model="openai/kimi-k3",
+            model="moonshot/moonshot-v1-8k",
             api_key=moonshot_key,
-            api_base="https://api.moonshot.cn/v1",
             temperature=0.2,
         )
 
-    # 3. Gemini (Mid-Tier Workhorse: Gemini 3.8 Flash)
-    gemini_key = os.environ.get("GEMINI_API_KEY")
+    # 3. Gemini (Mid-Tier Workhorse: gemini-2.5-flash)
+    gemini_key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
     if gemini_key:
-        return LLMConfig(model="gemini/gemini-3.8-flash", api_key=gemini_key)
+        return LLMConfig(model="gemini/gemini-2.5-flash", api_key=gemini_key)
 
     # Fallback default: DeepSeek top-tier
     return LLMConfig(model="deepseek/deepseek-chat")

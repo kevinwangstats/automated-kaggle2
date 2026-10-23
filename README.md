@@ -121,33 +121,72 @@ automated-kaggle2/
 
 ---
 
-## 5. LLM Provider Hierarchy & Tiering Policy
+## 5. LLM Provider Hierarchy & Supported Models
 
 The orchestrator integrates a multi-provider LLM resolver ([orchestrator/llm.py](file:///Users/kevinwang/projects/automated-kaggle2/orchestrator/llm.py)) that automatically detects API keys from your environment (`~/.zshrc`) with zero manual setup.
 
-### Model Tiering Policy
+### LiteLLM Provider Prefix Convention
 
-| Region / Provider | Tier Class | Default Model | Rationale & Capabilities |
-| --- | --- | --- | --- |
-| **DeepSeek** (`DEEPSEEK_API_KEY`) | **Top-Tier (Default)** | `deepseek/deepseek-chat` (DeepSeek-V3) | Flagship 671B MoE architecture; exceptional statistical reasoning and cost efficiency. Supports `deepseek/deepseek-reasoner` (R1). |
-| **Kimi / Moonshot** (`MOONSHOT_API_KEY`) | **Top-Tier Flagship** | `kimi-k3` / `kimi-k2.7-code` | Flagship 2.8T parameter model with 1M-token context window; frontier intelligence in code generation and complex diagnostics. |
-| **Google Gemini** (`GEMINI_API_KEY`) | **Mid-Tier Workhorse** | `gemini/gemini-3.8-flash` | Sub-second latency, robust structured JSON output, and multi-modal error slice comprehension. |
+LiteLLM routes calls using the `<provider>/<model_id>` naming convention. While [orchestrator/llm.py](file:///Users/kevinwang/projects/automated-kaggle2/orchestrator/llm.py) includes automatic normalization for shorthand names, passing the canonical prefix (e.g., `deepseek/deepseek-flash` rather than `deepseek-flash`) ensures direct, deterministic provider routing.
 
-### Dynamic CLI Model Override
+---
 
-Override the active LLM on any execution without editing code:
+### Supported Model Families & Model IDs
+
+The system is configured exclusively for three model families:
+
+#### 1. DeepSeek (`DEEPSEEK_API_KEY`) — Top-Tier Flagship & Default
+
+| Model String | Architecture / Description | Recommended Use |
+| --- | --- | --- |
+| `deepseek/deepseek-chat` | **DeepSeek-V3 (671B MoE)** — Default | Primary driver for statistical hypothesis generation and feature synthesis. |
+| `deepseek/deepseek-reasoner` | **DeepSeek-R1** — Frontier Reasoning | Deep mathematical reflection on complex error-slice clusters and covariate shift. |
+| `deepseek/deepseek-flash` | **DeepSeek-V4.1-Flash** | High-speed, low-latency hypothesis generation. |
+| `deepseek/deepseek-v4-pro` | **DeepSeek-V4-Pro** | High-capacity model with extended reasoning capability. |
+| `deepseek/deepseek-coder` | **DeepSeek-Coder** | Specialized coding and pipeline script refactoring. |
+
+#### 2. Moonshot / Kimi (`MOONSHOT_API_KEY`) — Top-Tier Flagship
+
+| Model String | Architecture / Description | Recommended Use |
+| --- | --- | --- |
+| `moonshot/moonshot-v1-8k` | Moonshot V1 with 8K context | Standard fast iteration on tabular diagnostics. |
+| `moonshot/moonshot-v1-32k` | Moonshot V1 with 32K context | Medium context runs with multi-iteration history audit logs. |
+| `moonshot/moonshot-v1-128k` | Moonshot V1 with 128K context | Long-horizon experiment ledgers and multi-model comparison. |
+| `moonshot/kimi-latest` | Kimi Flagship Latest | Frontier intelligence in complex diagnostics and cross-feature interactions. |
+
+#### 3. Google Gemini (`GEMINI_API_KEY` or `GOOGLE_API_KEY`) — Mid-Tier Workhorse
+
+| Model String | Architecture / Description | Recommended Use |
+| --- | --- | --- |
+| `gemini/gemini-2.5-flash` | Gemini 2.5 Flash — Mid-Tier Default | Sub-second latency, structured JSON output, high cost efficiency. |
+| `gemini/gemini-2.5-pro` | Gemini 2.5 Pro | Advanced reasoning for multi-step feature interactions. |
+| `gemini/gemini-2.0-flash` | Gemini 2.0 Flash | Ultra-fast token generation for quick experimental loops. |
+| `gemini/gemini-1.5-flash` | Gemini 1.5 Flash | Proven stability and structured extraction. |
+| `gemini/gemini-1.5-pro` | Gemini 1.5 Pro | Extended context window for massive tabular schemas and EDA logs. |
+
+---
+
+### Dynamic CLI Model Override Examples
+
+Override the active LLM on any execution via `--model`:
 
 ```bash
-# Run with default top-tier DeepSeek
+# 1. Default (deepseek/deepseek-chat)
 python -m orchestrator.runner --competition titanic
 
-# Switch to top-tier Kimi K3
-python -m orchestrator.runner --model kimi-k3 --competition titanic
+# 2. DeepSeek Flash
+python -m orchestrator.runner --model deepseek/deepseek-flash --competition titanic
 
-# Switch to mid-tier Gemini 3.8 Flash
+# 3. DeepSeek R1 Reasoner
+python -m orchestrator.runner --model deepseek/deepseek-reasoner --competition titanic
+
+# 4. Moonshot / Kimi
+python -m orchestrator.runner --model moonshot/moonshot-v1-8k --competition titanic
+
+# 5. Gemini 2.5 Flash
 python -m orchestrator.runner --model gemini/gemini-3.8-flash --competition titanic
 ```
 
 ### Deterministic Statistical Fallback
 
-If network connectivity is offline or API quotas are exhausted, the Methodologist automatically falls back to the deterministic error-slice deduction engine, ensuring autonomous runs complete without crashing.
+If network connectivity is unavailable, credentials are unconfigured, or API rate limits are encountered, the Methodologist automatically falls back to the deterministic statistical deduction engine, ensuring autonomous runs complete without crashing.

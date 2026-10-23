@@ -38,7 +38,7 @@ def extract_features(df: pd.DataFrame, is_train: bool = True) -> pd.DataFrame:
         out["family_size"] = df["SibSp"] + df["Parch"] + 1
 
 
-    # Applied hypothesis: h1_fare_sex_pclass_interaction
+    # Applied hypothesis: hyp_iter_1_interaction_age_pclass
     if 'Age' in df.columns and 'Pclass' in df.columns:
         out['age_pclass_interaction'] = out['Age'] * out['Pclass']
     if 'Fare' in df.columns and 'family_size' in out.columns:
